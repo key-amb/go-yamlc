@@ -1,3 +1,6 @@
+// Copyright (c) 2016 IKEDA Kiyoshi
+// The MIT License (MIT)
+
 package main
 
 import (
