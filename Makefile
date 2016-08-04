@@ -14,3 +14,6 @@ dist:
 	for os in $(OS); do \
 		script/build.sh $$os amd64 $(VERSION); \
 	done
+
+clean:
+	rm -f dist/*.zip
