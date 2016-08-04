@@ -4,44 +4,90 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/jessevdk/go-flags"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 )
 
+const version = "0.0.1"
+
+const (
+	exitOk = iota
+	exitErr
+)
+
+type CmdOpts struct {
+	Silent  bool `short:"s" long:"silent" description:"Don't print result"`
+	Version bool `short:"v" long:"version" description:"Show version number"`
+}
+
 func main() {
-	var buf []byte
-	if len(os.Args) > 1 {
-		buf = readFile(os.Args[1])
+	opts := &CmdOpts{}
+	args, err := flags.ParseArgs(opts, os.Args[1:])
+	if err != nil {
+		if _, ok := err.(*flags.Error); ok {
+			os.Exit(exitErr)
+		} else {
+			croak(err, opts.Silent)
+		}
+	}
+
+	if opts.Version {
+		fmt.Printf("Version: %s\n", version)
+		os.Exit(exitOk)
+	}
+
+	err = checkYaml(args, opts)
+	if err != nil {
+		croak(err, opts.Silent)
+	}
+
+	os.Exit(exitOk)
+}
+
+func croak(e error, silent bool) {
+	if !silent {
+		fmt.Printf("%v\n", e)
+	}
+	os.Exit(exitErr)
+}
+
+func checkYaml(args []string, opts *CmdOpts) error {
+	var (
+		buf []byte
+		err error
+	)
+	if len(args) > 0 {
+		buf, err = readFile(args[0], opts.Silent)
 	} else {
 		buf = readStdin()
 	}
-
-	m := make(map[interface{}]interface{})
-	err := yaml.Unmarshal(buf, &m)
 	if err != nil {
-		croak(err)
+		return err
 	}
 
-	os.Exit(0)
+	m := make(map[interface{}]interface{})
+	err = yaml.Unmarshal(buf, &m)
+	if err != nil {
+		return err
+	}
+
+	if !opts.Silent {
+		fmt.Println("Syntax OK")
+	}
+
+	return nil
 }
 
-func croak(e error) {
-	fmt.Print(e)
-	os.Exit(1)
-}
-
-func readFile(path string) []byte {
+func readFile(path string, silent bool) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		croak(err)
+		croak(err, silent)
 	}
 	defer file.Close()
 	buf, err := ioutil.ReadAll(file)
-	if err != nil {
-		croak(err)
-	}
-	return buf
+	return buf, err
 }
 
 func readStdin() []byte {
