@@ -14,6 +14,14 @@ yamlc --[v]ersion
 yamlc --[h]elp
 ```
 
+# Install
+
+```bash
+go get github.com/key-amb/yamlc
+```
+
+Or get binaries at [Releases](https://github.com/key-amb/yamlc/releases) page.
+
 # License
 
 The MIT License (MIT)
