@@ -26,13 +26,21 @@ type CmdOpts struct {
 }
 
 func main() {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Printf("ERROR!\n%v\n", err)
+		}
+		os.Exit(exitErr)
+	}()
+
 	opts := &CmdOpts{}
 	args, err := flags.ParseArgs(opts, os.Args[1:])
 	if err != nil {
 		if _, ok := err.(*flags.Error); ok {
 			os.Exit(exitErr)
 		} else {
-			croak(err, opts.Silent)
+			panic(err)
 		}
 	}
 
@@ -41,22 +49,23 @@ func main() {
 		os.Exit(exitOk)
 	}
 
-	var buf []byte
-	buf, err = getInputBuffer(args, opts)
+	buf := getInputBuffer(args, opts)
 
 	err = checkYaml(buf, opts)
-	if err != nil {
-		croak(err, opts.Silent)
-	}
+	croakIfError(err, opts.Silent)
 
 	os.Exit(exitOk)
 }
 
-func croak(e error, silent bool) {
-	if !silent {
-		fmt.Printf("%v\n", e)
+func croakIfError(e error, silent bool) {
+	if e == nil {
+		return
 	}
-	os.Exit(exitErr)
+	if silent {
+		panic(nil)
+	} else {
+		panic(e)
+	}
 }
 
 func checkYaml(buf []byte, opts *CmdOpts) error {
@@ -73,28 +82,26 @@ func checkYaml(buf []byte, opts *CmdOpts) error {
 	return nil
 }
 
-func getInputBuffer(args []string, opts *CmdOpts) ([]byte, error) {
-	var (
-		buf []byte
-		err error
-	)
+func getInputBuffer(args []string, opts *CmdOpts) []byte {
+	var buf []byte
 	if len(args) > 0 {
-		buf, err = readFile(args[0], opts.Silent)
+		buf = readFile(args[0], opts.Silent)
 	} else {
 		buf = readStdin()
 	}
 
-	return buf, err
+	return buf
 }
 
-func readFile(path string, silent bool) ([]byte, error) {
+func readFile(path string, silent bool) []byte {
 	file, err := os.Open(path)
-	if err != nil {
-		croak(err, silent)
-	}
+	croakIfError(err, silent)
 	defer file.Close()
 	buf, err := ioutil.ReadAll(file)
-	return buf, err
+	if err != nil {
+		panic(err)
+	}
+	return buf
 }
 
 func readStdin() []byte {
