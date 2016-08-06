@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/key-amb/yamlc.svg?branch=master)](https://travis-ci.org/key-amb/yamlc)
+
 # yamlc
 
 A YAML syntax checker.
