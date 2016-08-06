@@ -41,7 +41,10 @@ func main() {
 		os.Exit(exitOk)
 	}
 
-	err = checkYaml(args, opts)
+	var buf []byte
+	buf, err = getInputBuffer(args, opts)
+
+	err = checkYaml(buf, opts)
 	if err != nil {
 		croak(err, opts.Silent)
 	}
@@ -56,22 +59,9 @@ func croak(e error, silent bool) {
 	os.Exit(exitErr)
 }
 
-func checkYaml(args []string, opts *CmdOpts) error {
-	var (
-		buf []byte
-		err error
-	)
-	if len(args) > 0 {
-		buf, err = readFile(args[0], opts.Silent)
-	} else {
-		buf = readStdin()
-	}
-	if err != nil {
-		return err
-	}
-
+func checkYaml(buf []byte, opts *CmdOpts) error {
 	m := make(map[interface{}]interface{})
-	err = yaml.Unmarshal(buf, &m)
+	err := yaml.Unmarshal(buf, &m)
 	if err != nil {
 		return err
 	}
@@ -81,6 +71,20 @@ func checkYaml(args []string, opts *CmdOpts) error {
 	}
 
 	return nil
+}
+
+func getInputBuffer(args []string, opts *CmdOpts) ([]byte, error) {
+	var (
+		buf []byte
+		err error
+	)
+	if len(args) > 0 {
+		buf, err = readFile(args[0], opts.Silent)
+	} else {
+		buf = readStdin()
+	}
+
+	return buf, err
 }
 
 func readFile(path string, silent bool) ([]byte, error) {
