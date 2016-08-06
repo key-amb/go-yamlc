@@ -13,7 +13,7 @@ import (
 	"os"
 )
 
-const version = "0.1.0"
+const version = "0.9.0"
 
 const (
 	exitOk = iota
